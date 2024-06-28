@@ -14,6 +14,9 @@ export class JobController {
     @Get('exec-result')
     async getResult(@Query('jobId') jobId: string) {
         const job = await this.jobService.getJobResult(jobId);
+        if (!job) {
+            return { status: 'not_found', result: null };
+        }
         return { status: job.status, result: job.result };
     }
 }
