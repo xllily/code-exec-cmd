@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JobService } from './job.service';
 import { JobController } from './job.controller';
@@ -10,6 +11,15 @@ import { JobSchema } from './job.schema';
     imports: [
         TypeOrmModule.forFeature([Job]),
         MongooseModule.forFeature([{ name: 'Job', schema: JobSchema }]),
+        BullModule.forRoot({
+            redis: {
+                host: 'localhost',
+                port: 6379,
+            },
+        }),
+        BullModule.registerQueue({
+            name: 'jobQueue',
+        }),
     ],
     providers: [JobService],
     controllers: [JobController],
