@@ -1,8 +1,8 @@
 import { Schema } from 'mongoose';
 
 export const JobSchema = new Schema({
-    _id: String,  // 确保 _id 被定义为字符串类型
-    code: String,
-    result: String,
-    status: { type: String, default: 'pending' },
+    _id: { type: String, required: true },
+    code: { type: String, required: true },
+    result: { type: String },
+    status: { type: String, required: true },
 });

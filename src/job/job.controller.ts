@@ -7,13 +7,11 @@ export class JobController {
 
     @Post('submit-code')
     async submitCode(@Body('code') code: string) {
-        const job = await this.jobService.createJob(code);
-        return { jobId: job.id };
+        return this.jobService.createJob(code);
     }
 
     @Get('exec-result')
-    async getResult(@Query('jobId') jobId: string) {
-        const result = await this.jobService.getJobResult(jobId);
-        return result;
+    async getExecResult(@Query('jobId') jobId: string) {
+        return this.jobService.getJobResult(jobId);
     }
 }

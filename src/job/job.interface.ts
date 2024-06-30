@@ -3,6 +3,6 @@ import { Document } from 'mongoose';
 export interface Job extends Document {
     readonly _id: string;
     readonly code: string;
-    result?: string;
-    status: string;
+    readonly result: string;
+    readonly status: string;
 }

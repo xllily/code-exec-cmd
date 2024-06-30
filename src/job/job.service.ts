@@ -1,39 +1,43 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import { Job } from './job.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Job as MongoJob } from './job.interface';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+import { Job } from './job.interface';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class JobService {
     private readonly logger = new Logger(JobService.name);
 
     constructor(
-        @InjectRepository(Job)
-        private jobRepository: Repository<Job>,
-        @InjectQueue('codeSaveQueue') private codeSaveQueue: Queue,
-        @InjectQueue('codeExecQueue') private codeExecQueue: Queue,
-        @InjectModel('Job') private mongoJobModel: Model<MongoJob>,
+        @InjectModel('Job') private readonly jobModel: Model<Job>,
+        @InjectQueue('code-save') private readonly codeSaveQueue: Queue,
     ) { }
 
-    async createJob(code: string): Promise<Job> {
-        const job = this.jobRepository.create({ status: 'pending' });
-        const savedJob = await this.jobRepository.save(job);
+    async createJob(code: string): Promise<{ jobId: string }> {
+        const job = new this.jobModel({
+            _id: uuidv4(),
+            code,
+            status: 'pending',
+        });
 
-        this.logger.log(`Job created with ID: ${savedJob.id}`);
-        await this.codeSaveQueue.add('saveCode', { jobId: savedJob.id, code });
-        return savedJob;
+        const savedJob = await job.save();
+        this.logger.log(`Saved job with id: ${savedJob._id}`);
+
+        await this.codeSaveQueue.add('saveCode', {
+            jobId: savedJob._id,
+            code,
+        });
+
+        return { jobId: savedJob._id };
     }
 
-    async getJobResult(id: string): Promise<{ status: string; result: string }> {
-        const mongoJob = await this.mongoJobModel.findById(id).exec();
-        if (!mongoJob) {
+    async getJobResult(jobId: string): Promise<{ status: string; result: string }> {
+        const job = await this.jobModel.findById(jobId).exec();
+        if (!job) {
             return { status: 'not_found', result: null };
         }
-        return { status: mongoJob.status, result: mongoJob.result };
+        return { status: job.status, result: job.result };
     }
 }
