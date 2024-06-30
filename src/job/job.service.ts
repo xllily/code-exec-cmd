@@ -15,20 +15,25 @@ export class JobService {
     constructor(
         @InjectRepository(Job)
         private jobRepository: Repository<Job>,
-        @InjectQueue('jobQueue') private jobQueue: Queue,
+        @InjectQueue('codeSaveQueue') private codeSaveQueue: Queue,
+        @InjectQueue('codeExecQueue') private codeExecQueue: Queue,
         @InjectModel('Job') private mongoJobModel: Model<MongoJob>,
     ) { }
 
     async createJob(code: string): Promise<Job> {
-        const job = this.jobRepository.create({ code });
+        const job = this.jobRepository.create({ status: 'pending' });
         const savedJob = await this.jobRepository.save(job);
 
         this.logger.log(`Job created with ID: ${savedJob.id}`);
-        await this.jobQueue.add('processJob', { jobId: savedJob.id });
+        await this.codeSaveQueue.add('saveCode', { jobId: savedJob.id, code });
         return savedJob;
     }
 
-    async getJobResult(id: string): Promise<MongoJob> {
-        return this.mongoJobModel.findById(id).exec();
+    async getJobResult(id: string): Promise<{ status: string; result: string }> {
+        const mongoJob = await this.mongoJobModel.findById(id).exec();
+        if (!mongoJob) {
+            return { status: 'not_found', result: null };
+        }
+        return { status: mongoJob.status, result: mongoJob.result };
     }
 }

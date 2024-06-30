@@ -18,7 +18,10 @@ import { JobSchema } from './job.schema';
             },
         }),
         BullModule.registerQueue({
-            name: 'jobQueue',
+            name: 'codeSaveQueue',
+        }),
+        BullModule.registerQueue({
+            name: 'codeExecQueue',
         }),
     ],
     providers: [JobService],
