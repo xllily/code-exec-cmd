@@ -11,7 +11,7 @@ import { JobModule } from './job/job.module';
         port: parseInt(process.env.REDIS_PORT, 10) || 6379,
       },
     }),
-    MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost/nest'),
+    MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost/code-exec'),
     BullModule.registerQueue({
       name: 'code-save',
     }),
